@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inferno Nepean Hockey</title>
-
 <style>
 body{margin:0;font-family:Arial;background:#0f0f0f;color:#f5f5f5}
 header{background:linear-gradient(90deg,#b30000,#ff4500);padding:20px;display:flex;flex-wrap:wrap;align-items:center;gap:20px}
@@ -52,7 +51,7 @@ th{background:#222}
 </div>
 
 <header>
-<img id="logoImg" src="" alt="Inferno Logo">
+<img id="logoImg" src="assets/inferno-logo.png" alt="Inferno Logo">
 <nav>
 <a onclick="showPage('about')">About</a>
 <a onclick="showPage('news')">News</a>
@@ -70,7 +69,6 @@ th{background:#222}
 <button onclick="updateLogoPublic()">Change Logo</button>
 </section>
 
-<!-- ABOUT -->
 <section id="about" class="page">
 <h2>About</h2>
 <div class="card">
@@ -80,7 +78,6 @@ th{background:#222}
 </div>
 </section>
 
-<!-- NEWS -->
 <section id="news" class="page">
 <h2>Team News</h2>
 <div class="card">
@@ -94,7 +91,6 @@ th{background:#222}
 </div>
 </section>
 
-<!-- ROSTER -->
 <section id="roster" class="page">
 <h2>Team Roster</h2>
 <div class="card">
@@ -121,7 +117,7 @@ th{background:#222}
 <footer>Inferno Nepean Hockey © 2025</footer>
 
 <script type="module">
-// Firebase v12 ES Modules
+// Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
 import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
@@ -144,16 +140,16 @@ const db = getDatabase(app);
 // Admin/member login
 const MEMBER_PASSWORD="INferno12831";
 const ADMIN_KEY="88123612";
-let admins=JSON.parse(localStorage.admins||'[]');
+let admins = JSON.parse(localStorage.admins || '[]');
 
-const logoImg=document.getElementById("logoImg");
+const logoImg = document.getElementById("logoImg");
 
-// Load logo from Firebase
+// Load logo
 get(ref(db,'logo')).then(snapshot=>{
   logoImg.src = snapshot.val() || "assets/inferno-logo.png";
 });
 
-// Upload logo to Cloudinary + save URL in Firebase
+// Update logo via Cloudinary
 function updateLogoPublic(){
   const file = document.getElementById("logoUpload").files[0];
   if(!file) return alert("Select a file");
@@ -171,52 +167,58 @@ function updateLogoPublic(){
     .catch(err=>alert("Upload failed: "+err));
 }
 
-// Admin/member login functions
+// Login functions
 function memberLogin(){
-  if(memberPass.value!==MEMBER_PASSWORD) return alert("Wrong password");
-  loginOverlay.style.display="none";
-  logoutBtn.style.display="block";
+  const pass = document.getElementById("memberPass").value;
+  if(pass !== MEMBER_PASSWORD) return alert("Wrong password");
+  document.getElementById("loginOverlay").style.display="none";
+  document.getElementById("logoutBtn").style.display="block";
   showPage("about");
 }
+
 function adminLogin(){
-  if(!admins.find(a=>a.username===adminUser.value&&a.password===adminPass.value))
-    return alert("Invalid admin");
+  const user = document.getElementById("adminUser").value;
+  const pass = document.getElementById("adminPass").value;
+  if(!admins.find(a=>a.username===user && a.password===pass)) return alert("Invalid admin");
   document.querySelectorAll(".admin-only").forEach(e=>e.style.display="block");
-  loginOverlay.style.display="none";
-  logoutBtn.style.display="block";
+  document.getElementById("loginOverlay").style.display="none";
+  document.getElementById("logoutBtn").style.display="block";
   showPage("about");
 }
+
 function createAdmin(){
-  if(adminKey.value!==ADMIN_KEY) return alert("Wrong key");
-  admins.push({username:newAdminUser.value,password:newAdminPass.value});
-  localStorage.admins=JSON.stringify(admins);
+  const key = document.getElementById("adminKey").value;
+  if(key !== ADMIN_KEY) return alert("Wrong key");
+  admins.push({username:document.getElementById("newAdminUser").value,password:document.getElementById("newAdminPass").value});
+  localStorage.admins = JSON.stringify(admins);
   alert("Admin created");
 }
-function logout(){location.reload();}
+
+function logout(){
+  location.reload();
+}
+
 function showPage(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
-// ROSTER public with Firebase
-const rosterF=document.getElementById("rosterF");
-const rosterD=document.getElementById("rosterD");
-const rosterG=document.getElementById("rosterG");
+// Roster with Firebase
+const rosterF = document.getElementById("rosterF");
+const rosterD = document.getElementById("rosterD");
+const rosterG = document.getElementById("rosterG");
 
 function addRosterRow(p){
-  const tr=document.createElement("tr");
-  tr.innerHTML=`
-    <td>${p.name}</td>
-    <td>${p.num}</td>
-    <td class="admin-only">
-      <button onclick="editRoster(this)">Edit</button>
-      <button onclick="deleteRoster(this)">🗑️</button>
-    </td>`;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${p.name}</td><td>${p.num}</td><td class="admin-only">
+    <button onclick="editRoster(this)">Edit</button>
+    <button onclick="deleteRoster(this)">🗑️</button>
+  </td>`;
   (p.group==="F"?rosterF:p.group==="D"?rosterD:rosterG).appendChild(tr);
 }
 
 function saveRosterPublic(){
-  const collect=(t,g)=>[...t.rows].map(r=>({name:r.cells[0].textContent,num:r.cells[1].textContent,group:g}));
+  const collect = (t,g) => [...t.rows].map(r=>({name:r.cells[0].textContent,num:r.cells[1].textContent,group:g}));
   set(ref(db,'roster'),[
     ...collect(rosterF,"F"),
     ...collect(rosterD,"D"),
@@ -225,20 +227,20 @@ function saveRosterPublic(){
 }
 
 onValue(ref(db,'roster'),snapshot=>{
-  const data = snapshot.val()||[];
+  const data = snapshot.val() || [];
   [rosterF,rosterD,rosterG].forEach(t=>t.innerHTML='');
   data.forEach(addRosterRow);
 });
 
 function editRoster(b){
-  const r=b.parentElement.parentElement;
+  const r = b.parentElement.parentElement;
   if(b.textContent==="Edit"){
     r.cells[0].innerHTML=`<input value="${r.cells[0].textContent}">`;
     r.cells[1].innerHTML=`<input value="${r.cells[1].textContent}">`;
     b.textContent="Save";
   } else {
-    r.cells[0].textContent=r.cells[0].querySelector("input").value;
-    r.cells[1].textContent=r.cells[1].querySelector("input").value;
+    r.cells[0].textContent = r.cells[0].querySelector("input").value;
+    r.cells[1].textContent = r.cells[1].querySelector("input").value;
     b.textContent="Edit";
     saveRosterPublic();
   }
@@ -249,15 +251,15 @@ function deleteRoster(b){
   saveRosterPublic();
 }
 
-document.getElementById("rosterForm").onsubmit=e=>{
+document.getElementById("rosterForm").onsubmit = e=>{
   e.preventDefault();
-  const [n,g,num]=[e.target[0].value,e.target[1].value,e.target[2].value];
+  const [n,g,num] = [e.target[0].value,e.target[1].value,e.target[2].value];
   addRosterRow({name:n,group:g,num});
   saveRosterPublic();
   e.target.reset();
 };
 
-// Expose functions to global scope so inline onclick works
+// Expose functions globally
 window.showPage = showPage;
 window.memberLogin = memberLogin;
 window.adminLogin = adminLogin;
